@@ -1,5 +1,7 @@
 // the ration to scale 1:5 in this simulation
 
+import codeanticode.syphon.*;
+
 import peasy.*;
 PeasyCam cam;
 
@@ -31,6 +33,9 @@ boolean USEPACKET = true;
 float speedAdjust = 80.0;
 float speedMod;
 
+SyphonServer server;
+boolean syphonOut = false;
+
 
 float ratio = 5.0;
 
@@ -58,47 +63,22 @@ float amplitude = (120.0 * ratio) / 2;  // Height of wave
 float period = 320.36;
 float dx;  // Value for incrementing X, a function of period and xspacing
 
+
+void settings() {         //needed to make Syphon output work.
+  size(800, 500, P3D);
+  PJOGL.profile=1;    //for syphon
+}
+
+
 void setup() {
-  size(800, 600, P3D);
-  //size(1280, 1000, P3D);
   rectMode(CENTER);
   stroke(0);
-  frameRate(30);
+  frameRate(60);
   smooth(8);
   oscP5 = new OscP5(this, 50001);
+  server = new SyphonServer(this, "LoveLights Syphon");
 
 
-  cp5 = new ControlP5(this);
-
-  // sine wave period
-  cp5.addSlider("period")
-    .setPosition(100, 50)
-    .setSize(100, 25)
-    .setRange(1, 500)
-    .setValue(320.36);
-
-  // sine wave spacing
-  cp5.addSlider("spacing")
-    .setPosition(100, 100)
-    .setSize(100, 25)
-    .setRange(0, 100);
-
-  cp5.addSlider("speed")
-    .setPosition(100, 150)
-    .setSize(100, 25)
-    .setRange(255, 0)
-    .setValue(200.0);
-
-  cp5.getController("period").getValueLabel().align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-  cp5.getController("period").getCaptionLabel().align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-
-  cp5.getController("spacing").getValueLabel().align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-  cp5.getController("spacing").getCaptionLabel().align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-
-  cp5.getController("speed").getValueLabel().align(ControlP5.LEFT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-  cp5.getController("speed").getCaptionLabel().align(ControlP5.RIGHT, ControlP5.BOTTOM_OUTSIDE).setPaddingX(0).setColor(0);
-
-  cp5.setAutoDraw(false);
 
   // init the balls array
   balls = new Ball[(int)xgrid][(int)zgrid];
@@ -146,12 +126,8 @@ void draw() {
 
   dx = (TWO_PI / period) * spacing;
 
-  drawOrigin();
   //drawPerson(floorPos);
 
-  //if (USEPACKET == true) {
-  //  parsePacket();
-  //}
 
   pushMatrix();
   rotateX(radians(90));
@@ -205,16 +181,13 @@ void draw() {
   fill(255);
   popMatrix();
 
+  if (syphonOut) {
+    server.sendScreen();
+  }
+
   //gui();
 }
 
-void gui() {
-  hint(DISABLE_DEPTH_TEST);
-  cam.beginHUD();
-  cp5.draw();
-  cam.endHUD();
-  hint(ENABLE_DEPTH_TEST);
-}
 
 void keyPressed() {
   println("---");
@@ -227,23 +200,18 @@ void keyPressed() {
       // Do down stuff here
       println("RIGHT");
       personPosition += personPositionMoveValue;
+    } else if (keyCode == UP) {
+      // Do down stuff here
+      println("UP");
+      syphonOut = !syphonOut;
     }
   }
-
-
 }
 
 //void mousePressed() {
 //  debug = !debug;
 //}
 
-void drawOrigin() {
-  pushMatrix();
-  translate(0, 0, -75);
-  sphereDetail(10);
-  sphere(50);
-  popMatrix();
-}
 
 /**
  * To perform any action on datagram reception, you need to implement this 
@@ -276,9 +244,8 @@ void drawPerson(float floorPos) {
 }
 
 
-void mousePressed(){
+void mousePressed() {
   println("speedMod: " + speedMod);
-
 }
 
 void oscEvent(OscMessage theOscMessage) {
@@ -355,6 +322,4 @@ void oscEvent(OscMessage theOscMessage) {
     dmxData[21] = subset(rawData[10], 138, 110);
     //println("UNIVERSE 11 RECEIVED");
   }
-
-
 }

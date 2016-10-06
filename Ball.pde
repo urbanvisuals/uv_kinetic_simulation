@@ -59,7 +59,7 @@ class Ball {
       //popMatrix();
       
       pushMatrix();
-        translate(-(xoffset/2) + xpos, 100 + ypos*1.5, -(xoffset/2) + zpos);
+        translate(-(xoffset/2) + xpos, 100 + ypos*2, -(xoffset/2) + zpos);
         fill(red, green, blue);
         noStroke();
         sphere(25);
@@ -115,8 +115,6 @@ class Ball {
   void setYPos(float yUpdate) {
     
     speedMod = (255-speed)/speedAdjust;
-
-    println(speedMod);
     
     if (yUpdate < ypos ){
       if (ypos - yUpdate > speedMod){
